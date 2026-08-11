@@ -160,6 +160,28 @@ input[type=range]{width:100%;accent-color:var(--beam);background:transparent}
 }
 .openbtn:hover{background:var(--beam);color:#12091f}
 .openbtn[disabled]{opacity:.45;cursor:wait}
+.bulkrow{display:flex;gap:9px;margin-top:10px}
+.bulkrow input{
+  width:78px;background:#100e1c;border:1px solid var(--edge);color:var(--bone);
+  font-family:'JetBrains Mono',monospace;font-size:15px;padding:8px 10px;border-radius:0
+}
+.bulkrow .openbtn{flex:1;margin-top:0}
+.bulkwrap{margin-top:20px}
+.bulkstatus{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--bone);
+  margin:0 0 12px;min-height:18px
+}
+.bulkgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bulkbox{padding:16px}
+.bulkbox h3{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--bone-dim);margin:0 0 10px;font-weight:400
+}
+.bulklist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
+.bulklist .brow{display:flex;align-items:center;gap:9px;font-size:13.5px}
+.bulklist .brow .rn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--bone-dim);width:36px;flex:none}
+.bulklist .none{color:var(--bone-dim);font-style:italic;font-size:13px}
+@media (max-width:600px){.bulkgrid{grid-template-columns:1fr}}
 .result{
   margin-top:14px;min-height:22px;text-align:center;font-size:14px;color:var(--bone-dim);
   display:flex;flex-direction:column;align-items:center;gap:8px
@@ -519,7 +541,7 @@ function buildWheel(host, segs, opts={}){
   }
   return {svg,g,mids,bounds,paths,ro,ri,S};
 }
-function spinTo(ref,index,turns=5){
+function spinTo(ref,index,turns=5,durMs=2900){
   const g=ref.g;
   const b=ref.bounds[index];
   if(!b) return 0;
@@ -534,7 +556,7 @@ function spinTo(ref,index,turns=5){
   const target=current+turns*360+forward;
 
   const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  g.style.transition=reduce?"none":"transform 2.9s cubic-bezier(.13,.72,.1,1)";
+  g.style.transition=reduce?"none":`transform ${durMs}ms cubic-bezier(.13,.72,.1,1)`;
   g.style.transform=`rotate(${target}deg)`;
   g.dataset.rot=target;
 
@@ -548,7 +570,7 @@ function spinTo(ref,index,turns=5){
   }
 
   // mark the winner once it stops
-  const dur=reduce?0:2900;
+  const dur=reduce?0:durMs;
   ref.paths.forEach(p=>{ if(p){p.setAttribute("stroke","#0d0b14");p.setAttribute("stroke-width","1.5");} });
   setTimeout(()=>{
     const win=ref.paths[index];
@@ -632,6 +654,7 @@ function outcomeSegs(m){
 }
 
 function renderStage(){
+  clearInterval(bulkTimer); bulkTimer=null;
   const stage=document.getElementById("stage");
   stage.innerHTML="";
   const sc=state.s[0], i=0;
@@ -660,7 +683,24 @@ function renderStage(){
         <div class="legend" id="lg${i}"></div>
         <div class="stats" id="st${i}"></div>
         <button class="openbtn" id="ob${i}">Open the chest</button>
+        <div class="bulkrow">
+          <input type="number" id="bn${i}" value="10" min="1" max="500" aria-label="Number of chests">
+          <button class="openbtn" id="mb${i}">Open 10 chests</button>
+        </div>
         <div class="result" id="rs${i}"></div>
+      </div>
+    </div>
+    <div class="bulkwrap" id="bw${i}" hidden>
+      <p class="bulkstatus" id="bs${i}"></p>
+      <div class="bulkgrid">
+        <div class="panel bulkbox">
+          <h3 id="bmh${i}">Your purples</h3>
+          <div class="bulklist" id="bml${i}"></div>
+        </div>
+        <div class="panel bulkbox">
+          <h3 id="bth${i}">Team's purples</h3>
+          <div class="bulklist" id="btl${i}"></div>
+        </div>
       </div>
     </div>
   `;
@@ -698,6 +738,12 @@ function renderStage(){
   });
 
   card.querySelector("#ob"+i).onclick=()=>openChest(i,card);
+  const bn=card.querySelector("#bn"+i);
+  bn.oninput=()=>{
+    const n=Math.min(500,Math.max(1,Math.round(+bn.value||0)||1));
+    card.querySelector("#mb"+i).textContent=`Open ${n} chest${n===1?"":"s"}`;
+  };
+  card.querySelector("#mb"+i).onclick=()=>openMany(i,card);
 }
 
 /* ============ simulate ============ */
@@ -766,6 +812,85 @@ function openChest(i,card){
 
     if(myItems.length) spinTo(itemWheels[state.weight],UNIQUES.indexOf(myItems[0]),4);
   },wait+30);
+}
+
+/* ============ open many ============ */
+let bulkTimer=null;
+function openMany(i,card){
+  clearInterval(bulkTimer);
+  const sc=state.s[i];
+  const m=model(sc);
+  const total=Math.min(500,Math.max(1,Math.round(+card.querySelector("#bn"+i).value||0)||10));
+  const single=card.querySelector("#ob"+i), multi=card.querySelector("#mb"+i);
+  single.disabled=true; multi.disabled=true;
+  card.querySelector("#rs"+i).innerHTML="";
+  card.querySelector("#bw"+i).hidden=false;
+  const status=card.querySelector("#bs"+i);
+  const mineList=card.querySelector("#bml"+i), teamList=card.querySelector("#btl"+i);
+  mineList.innerHTML=""; teamList.innerHTML="";
+  card.querySelector("#bmh"+i).textContent="Your purples";
+  card.querySelector("#bth"+i).textContent="Team's purples";
+
+  const segs=wheelRefs[i].segs, ref=wheelRefs[i].ref;
+  let n=0, mineCount=0, teamCount=0, whites=0, pets=0, kits=0, dusts=0;
+
+  const addRow=(list,raid,u)=>{
+    const r=document.createElement("div");
+    r.className="brow";
+    r.innerHTML=`<span class="rn">#${raid}</span>${iconHTML(u,22)}<span>${u.n}</span>`;
+    list.appendChild(r);
+    list.scrollTop=list.scrollHeight;
+  };
+
+  const tick=()=>{
+    n++;
+    let mine=0, theirs=0;
+    m.teamRolls.forEach(p=>{
+      if(Math.random()>=p) return;
+      if(Math.random()<m.share) mine++; else theirs++;
+    });
+    const myItems=[], theirItems=[];
+    for(let k=0;k<mine;k++){ myItems.push(pickItem()); if(Math.random()<1/53) pets++; }
+    for(let k=0;k<theirs;k++){ theirItems.push(pickItem()); }
+    if(state.cm){ if(Math.random()<1/75) kits++; if(Math.random()<1/400) dusts++; }
+
+    const wantName = mine===0
+        ? (theirs===0 ? "White light — nobody gets one" : "A teammate takes it")
+        : (mine===1 ? "Yours" : "Two or more, yours");
+    let idx=segs.findIndex(sg=>sg.n===wantName);
+    if(idx<0) idx=0;
+    spinTo(ref,idx,1,650);
+    if(myItems.length) spinTo(itemWheels[state.weight],UNIQUES.indexOf(myItems[0]),1,650);
+    card.querySelector("#beam"+i).className="beam"+(mine||theirs?" purple":"");
+
+    myItems.forEach(u=>{ addRow(mineList,n,u); mineCount++; });
+    theirItems.forEach(u=>{ addRow(teamList,n,u); teamCount++; });
+    if(!mine && !theirs) whites++;
+    card.querySelector("#bmh"+i).textContent=`Your purples (${mineCount})`;
+    card.querySelector("#bth"+i).textContent=`Team's purples (${teamCount})`;
+
+    const line = myItems.length ? myItems.map(u=>u.n).join(" + ")+" — yours!"
+        : theirItems.length ? theirItems.map(u=>u.n).join(" + ")+" — a teammate's"
+        : "White light";
+    status.textContent=`Raid ${n}/${total} — ${line}`;
+
+    if(n>=total){
+      clearInterval(bulkTimer); bulkTimer=null;
+      single.disabled=false; multi.disabled=false;
+      const extra=[];
+      if(pets) extra.push(`Olmlet ×${pets}`);
+      if(kits) extra.push(`colour kit ×${kits}`);
+      if(dusts) extra.push(`dust ×${dusts}`);
+      status.textContent=`${total} raid${total===1?"":"s"} — `+
+        `${mineCount} purple${mineCount===1?"":"s"} yours, ${teamCount} for the team, `+
+        `${whites} white light${whites===1?"":"s"}`+
+        (extra.length?` · ${extra.join(" · ")}`:``);
+      if(!mineCount) mineList.innerHTML=`<div class="none">nothing — dry</div>`;
+      if(!teamCount) teamList.innerHTML=`<div class="none">nothing</div>`;
+    }
+  };
+  tick();
+  if(n<total) bulkTimer=setInterval(tick,1000);
 }
 
 /* ============ wheel two ============ */
