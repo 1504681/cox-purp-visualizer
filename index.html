@@ -111,6 +111,21 @@ input[type=range]{width:100%;accent-color:var(--moss);background:transparent}
 }
 .toggle input{accent-color:var(--kit);width:15px;height:15px}
 .toggle.on{color:var(--bone);border-color:#3f6b3f}
+.qmark{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;border:1px solid var(--edge);
+  color:var(--bone-dim);font-family:'JetBrains Mono',monospace;font-size:11px;
+  cursor:help;margin-left:-4px;flex:none
+}
+.qmark:hover,.qmark:focus{border-color:var(--moss);color:var(--bone)}
+.qmark .tip{
+  position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  width:240px;background:#17130b;border:1px solid var(--edge);
+  padding:10px 12px 11px;margin-bottom:2px;font-size:12.5px;line-height:1.5;
+  color:var(--bone);text-align:left;display:none;z-index:5
+}
+.qmark:hover .tip,.qmark:focus .tip,.qmark:focus-within .tip{display:block}
+.qmark .tip a{color:var(--moss)}
 
 /* ---------- wheel stage ---------- */
 .stage{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -329,6 +344,8 @@ footer a{color:#8d7f5c}
     <div class="setup" id="setup"></div>
     <div class="modes">
       <label class="toggle" id="cmToggle"><input type="checkbox" id="cm"> Challenge Mode</label>
+      <label class="toggle" id="ccToggle"><input type="checkbox" id="cc"> Content Creator</label>
+      <span class="qmark" tabindex="0" role="note" aria-label="About the content creator multiplier">?<span class="tip">Jagex gives content creators a silent 2&times; purple multiplier. Source: <a href="https://www.youtube.com/watch?v=LgK4QdU8uo4" target="_blank" rel="noopener">youtube.com/watch?v=LgK4QdU8uo4</a></span></span>
     </div>
   </div>
   <div class="topcol">
@@ -432,6 +449,7 @@ const OUTCOME_COLORS = ["#3b3552","#b47cff","#8d5ae0","#6b3fc0","#4d2a94","#351a
 /* ============ state ============ */
 const state = {
   cm:false,
+  creator:false,
   weight:"w",                       // "w" live 69 | "wr" proposed 60 | "wc" proposed CM 56
   s:[ {label:"Your raid", key:"a", team:125000, you:45000, hex:"#b47cff"} ]
 };
@@ -460,7 +478,8 @@ function model(sc){
   const team=Math.max(0,sc.team||0);
   const you=Math.min(Math.max(0,sc.you||0),PLAYER_CAP,team);
   const share= team>0 ? you/team : 0;
-  const teamRolls=rollsFor(team);
+  let teamRolls=rollsFor(team);
+  if(state.creator) teamRolls=teamRolls.map(p=>Math.min(1,p*2));
   const yourRolls=teamRolls.map(p=>p*share);
   const teamDist=distribution(teamRolls);
   const yourDist=distribution(yourRolls);
@@ -1009,6 +1028,11 @@ function renderAll(){ renderStage(); renderCompare(); renderItemTable(); }
 document.getElementById("cm").onchange=e=>{
   state.cm=e.target.checked;
   document.getElementById("cmToggle").classList.toggle("on",state.cm);
+  renderAll();
+};
+document.getElementById("cc").onchange=e=>{
+  state.creator=e.target.checked;
+  document.getElementById("ccToggle").classList.toggle("on",state.creator);
   renderAll();
 };
 
