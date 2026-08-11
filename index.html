@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoX Purp Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Karla:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rock:#0d0b14;
+  --stone:#181527;
+  --stone-hi:#221d36;
+  --edge:#332c4e;
+  --bone:#ded3c0;
+  --bone-dim:#8e8599;
+  --beam:#b47cff;
+  --dust:#4fd6c8;
+  --kit:#6ee06e;
+  --gold:#e0a851;
+  --white-light:#cfd6e6;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 50% -14%, #241c3d 0%, rgba(36,28,61,0) 62%),
+    var(--rock);
+  color:var(--bone);
+  font-family:'Karla',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px 96px}
+
+/* ---------- masthead ---------- */
+.masthead{padding:64px 0 40px;text-align:center;position:relative}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--bone-dim);margin:0 0 22px
+}
+.masthead h1{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(34px,6.4vw,62px);line-height:1.02;letter-spacing:.02em;
+  margin:0;color:#f2ecdf;
+  text-shadow:0 0 46px rgba(180,124,255,.42)
+}
+.lede{max-width:620px;margin:20px auto 0;color:var(--bone-dim);font-size:16px}
+.lede b{color:var(--bone);font-weight:600}
+
+/* ---------- panels ---------- */
+.panel{
+  background:linear-gradient(160deg,var(--stone-hi),var(--stone));
+  border:1px solid var(--edge);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+  padding:22px;
+}
+hr.divide{
+  border:0;height:1px;background:var(--edge);margin:54px 0 22px
+}
+.sect-note{margin:0 0 20px;color:var(--bone-dim);font-size:14.5px;max-width:720px}
+
+/* ---------- setup ---------- */
+.setup{display:grid;grid-template-columns:1fr;gap:16px;max-width:560px;margin:0 auto}
+.setup .panel{padding:20px}
+.scen-name{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;margin:0 0 16px;display:flex;align-items:center;gap:9px
+}
+.pip{width:9px;height:9px;transform:rotate(45deg);display:inline-block}
+.pip.a{background:var(--beam)}
+.pip.b{background:var(--gold)}
+label.fld{display:block;margin-bottom:14px}
+label.fld > span{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:6px
+}
+label.fld em{font-family:'JetBrains Mono',monospace;font-style:normal;color:var(--bone);font-size:14px}
+input[type=number]{
+  width:100%;background:#100e1c;border:1px solid var(--edge);color:var(--bone);
+  font-family:'JetBrains Mono',monospace;font-size:17px;padding:9px 11px;border-radius:0
+}
+input[type=number]:focus-visible,button:focus-visible,select:focus-visible,input[type=range]:focus-visible{
+  outline:2px solid var(--beam);outline-offset:2px
+}
+input[type=range]{width:100%;accent-color:var(--beam);background:transparent}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.presets button{
+  background:transparent;border:1px solid var(--edge);color:var(--bone-dim);
+  font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 9px;cursor:pointer
+}
+.presets button:hover{border-color:var(--beam);color:var(--bone)}
+
+.total{
+  margin:14px 0 0;padding-top:13px;border-top:1px solid var(--edge);
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--bone)
+}
+.total b{color:var(--gold);font-weight:400;font-size:16px}
+.total .dim{color:var(--bone-dim);font-size:12px}
+.modes{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.toggle{
+  display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+  border:1px solid var(--edge);padding:8px 13px;background:#100e1c;
+  font-size:13px;color:var(--bone-dim);user-select:none
+}
+.toggle input{accent-color:var(--kit);width:15px;height:15px}
+.toggle.on{color:var(--bone);border-color:#3f6b3f}
+
+/* ---------- wheel stage ---------- */
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.wcard{position:relative;overflow:hidden;padding-top:30px}
+.wcard .beam{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:96px;height:190px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(207,214,230,.42),rgba(207,214,230,0));
+  filter:blur(13px);transition:background .5s ease
+}
+.wcard .beam.purple{background:linear-gradient(to bottom,rgba(180,124,255,.62),rgba(180,124,255,0))}
+.wcard .beam.dustc{background:linear-gradient(to bottom,rgba(79,214,200,.6),rgba(79,214,200,0))}
+.wcard .beam.kitc{background:linear-gradient(to bottom,rgba(110,224,110,.6),rgba(110,224,110,0))}
+.wcard h3{
+  position:relative;font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim);margin:0 0 4px;text-align:center
+}
+.headline{
+  position:relative;text-align:center;font-family:'Cinzel',serif;
+  font-size:clamp(38px,7vw,54px);line-height:1;color:#f2ecdf;margin:8px 0 2px
+}
+.headline .pct{color:var(--beam)}
+.subline{position:relative;text-align:center;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--bone-dim);margin-bottom:14px}
+
+.wheelbox{position:relative;width:100%;max-width:330px;margin:0 auto}
+.wheelbox svg{width:100%;height:auto;display:block}
+.slice{cursor:default;transition:opacity .18s}
+.wheelbox:hover .slice{opacity:.42}
+.wheelbox .slice:hover{opacity:1}
+.hub{text-align:center;position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.hub .big{font-family:'Cinzel',serif;font-size:30px;color:#f2ecdf;line-height:1}
+.hub .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone-dim);margin-top:5px}
+
+.legend{margin-top:18px;display:flex;flex-direction:column;gap:5px}
+.lrow{display:flex;align-items:center;gap:9px;font-size:13.5px}
+.swatch{width:11px;height:11px;flex:none}
+.lrow .val{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--bone)}
+
+.stats{margin-top:18px;border-top:1px solid var(--edge);padding-top:14px;display:flex;flex-direction:column;gap:7px}
+.srow{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:var(--bone-dim)}
+.srow b{font-family:'JetBrains Mono',monospace;font-weight:400;color:var(--bone)}
+
+.openbtn{
+  display:block;width:100%;margin-top:18px;background:transparent;
+  border:1px solid var(--beam);color:var(--beam);
+  font-family:'Cinzel',serif;font-size:14px;letter-spacing:.16em;text-transform:uppercase;
+  padding:11px;cursor:pointer;transition:background .2s,color .2s
+}
+.openbtn:hover{background:var(--beam);color:#12091f}
+.openbtn[disabled]{opacity:.45;cursor:wait}
+.result{
+  margin-top:14px;min-height:22px;text-align:center;font-size:14px;color:var(--bone-dim);
+  display:flex;flex-direction:column;align-items:center;gap:8px
+}
+.result img{width:38px;height:38px;image-rendering:pixelated}
+.result .won{font-family:'Cinzel',serif;font-size:19px;color:var(--gold)}
+
+/* ---------- compare strip ---------- */
+.compare{display:flex;flex-direction:column;gap:10px}
+.cmp{display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:center}
+.cmp .k{font-size:13.5px;color:var(--bone-dim)}
+.bars{display:flex;flex-direction:column;gap:4px}
+.bar{display:flex;align-items:center;gap:9px}
+.bar .track{flex:1;height:9px;background:#100e1c;border:1px solid var(--edge)}
+.bar .fill{height:100%;display:block}
+.bar .num{font-family:'JetBrains Mono',monospace;font-size:12.5px;width:104px;text-align:right;color:var(--bone)}
+
+/* ---------- unique wheel ---------- */
+.uniq{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:30px;align-items:start}
+.iconlayer{position:absolute;inset:0;pointer-events:none;transform-origin:50% 50%}
+.iconlayer .ic img{filter:drop-shadow(0 1px 3px rgba(0,0,0,.85))}
+.itable{width:100%;border-collapse:collapse;font-size:13.5px}
+.itable th{
+  text-align:left;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);
+  padding:0 0 9px;border-bottom:1px solid var(--edge)
+}
+.itable th.r,.itable td.r{text-align:right}
+.itable td{padding:6px 0;border-bottom:1px solid rgba(51,44,78,.5)}
+.itable td.nm{display:flex;align-items:center;gap:9px}
+.itable img{width:22px;height:22px;image-rendering:pixelated;flex:none}
+.itable .mono{font-family:'JetBrains Mono',monospace;font-size:12.5px}
+.itable .a{color:var(--beam)}
+.itable .b{color:var(--gold)}
+.chip{display:inline-block;width:9px;height:9px;transform:rotate(45deg);flex:none}
+
+
+/* ---------- item wheels: live vs proposed ---------- */
+.wheelpair{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wheelpair .panel{transition:border-color .25s}
+.wheelpair .panel.live{border-color:var(--gold)}
+.wtitle{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--bone-dim);margin:0 0 16px;text-align:center
+}
+.wtitle b{color:var(--bone);font-weight:400;display:block;margin-top:4px;letter-spacing:.1em}
+.wicon{position:absolute;transform:translate(-50%,-50%)}
+
+/* icon with an abbreviation behind it, in case the wiki image can't load */
+.ic{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ic i{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-style:normal;font-size:7px;font-weight:700;
+  letter-spacing:.02em;color:#0d0b14;background:var(--ic);border-radius:2px
+}
+.ic img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;position:relative}
+
+.itable td.up{color:#7bd47b}
+.itable td.down{color:#d4737b}
+.itable td.flat{color:var(--bone-dim)}
+.itable td.nm span:last-child{flex:1}
+
+
+
+/* ---------- wheel one: wheel beside the numbers ---------- */
+.wgrid{position:relative;display:grid;align-items:start}
+.wleft{padding-top:6px}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.tw{display:flex;flex-direction:column;gap:2px}
+.twn{font-family:'Cinzel',serif;font-size:clamp(28px,4vw,42px);line-height:1}
+.twl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--bone-dim)}
+.twx{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--bone-dim);margin-top:2px}
+.result .mate{
+  display:flex;align-items:center;gap:9px;color:var(--bone-dim);
+  font-size:14px;font-style:italic;text-align:left
+}
+
+
+/* ---------- top row: inputs beside wheel one ---------- */
+.topgrid{display:grid;margin-top:14px;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:26px;align-items:start}
+.topcol{min-width:0}
+.topcol .setup{max-width:none;margin:0}
+.topcol .modes{margin-top:16px}
+.stage .wcard{max-width:none;margin:0}
+.wgrid{grid-template-columns:minmax(0,290px) minmax(0,1fr);gap:26px}
+@media (max-width:1180px){ .wgrid{grid-template-columns:1fr;gap:22px} }
+@media (max-width:1000px){ .topgrid{grid-template-columns:1fr} }
+@media (max-width:1000px) and (min-width:821px){ .wgrid{grid-template-columns:minmax(0,290px) minmax(0,1fr)} }
+@media (max-width:820px){ .wgrid{grid-template-columns:1fr} }
+
+/* ---------- weighting picker ---------- */
+.pick{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
+.picklbl{font-size:13px;color:var(--bone-dim);margin-right:4px}
+.pickbtn{
+  background:#100e1c;border:1px solid var(--edge);color:var(--bone-dim);
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.06em;
+  padding:7px 13px;cursor:pointer;transition:border-color .2s,color .2s
+}
+.pickbtn:hover{color:var(--bone)}
+.pickbtn.on{border-color:var(--gold);color:var(--gold)}
+.bar .tag{
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--bone-dim);
+  width:20px;text-align:right;flex:none
+}
+.cmp .k{display:flex;align-items:center;gap:8px}
+.itable td.dim2{color:var(--bone-dim)}
+.stage{display:block}
+
+/* ---------- rules ---------- */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rule h4{
+  font-family:'Cinzel',serif;font-size:15px;margin:0 0 8px;color:#f2ecdf;font-weight:500
+}
+.rule p{margin:0 0 9px;font-size:14px;color:var(--bone-dim)}
+.rule .eq{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--gold);
+  background:#100e1c;border-left:2px solid var(--gold);padding:8px 11px;display:block;margin:10px 0
+}
+footer{margin-top:60px;text-align:center;font-size:12.5px;color:#5e5670}
+footer a{color:#7d7396}
+
+@media (max-width:1000px){
+  .wheelpair{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .setup,.stage,.wheelpair{grid-template-columns:1fr}
+  .uniq{grid-template-columns:1fr}
+  .cmp{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Chambers of Xeric · ancient chest</p>
+  <h1>CoX Purp Visualizer</h1>
+</header>
+
+<div class="topgrid">
+  <div class="topcol">
+    <div class="setup" id="setup"></div>
+    <div class="modes">
+      <label class="toggle" id="cmToggle"><input type="checkbox" id="cm"> Challenge Mode</label>
+    </div>
+  </div>
+  <div class="topcol">
+    <div class="stage" id="stage"></div>
+  </div>
+</div>
+
+<hr class="divide">
+
+<div class="pick" id="pick"></div>
+
+<div class="wheelpair" id="wheelpair">
+  <div class="panel" data-k="w">
+    <h3 class="wtitle">Live today <b>69 slots</b></h3>
+    <div class="wheelbox" id="wheel_w"><div class="iconlayer" id="icons_w"></div></div>
+    <p class="subline" style="margin-top:12px">Scrolls hold 40 of 69</p>
+  </div>
+  <div class="panel" data-k="wr">
+    <h3 class="wtitle">Proposed — regular <b>60 slots</b></h3>
+    <div class="wheelbox" id="wheel_wr"><div class="iconlayer" id="icons_wr"></div></div>
+    <p class="subline" style="margin-top:12px">Scrolls cut to 28 of 60</p>
+  </div>
+  <div class="panel" data-k="wc">
+    <h3 class="wtitle">Proposed — challenge mode <b>56 slots</b></h3>
+    <div class="wheelbox" id="wheel_wc"><div class="iconlayer" id="icons_wc"></div></div>
+    <p class="subline" style="margin-top:12px">Scrolls cut to 24 of 56</p>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <table class="itable">
+    <thead><tr>
+      <th>Item</th>
+      <th class="r">Live 69</th>
+      <th class="r">Share</th>
+      <th class="r">Reg 60</th>
+      <th class="r">Share</th>
+      <th class="r">Change</th>
+      <th class="r">CM 56</th>
+      <th class="r">Share</th>
+      <th class="r">Change</th>
+      <th class="r">Per raid</th>
+    </tr></thead>
+    <tbody id="ibody"></tbody>
+  </table>
+  <p class="subline" style="text-align:left;margin:14px 0 0" id="tableNote"></p>
+</div>
+
+<hr class="divide">
+<p class="sect-note">Your per-raid odds for the items that move most, under all three tables — same points, same purple rate, only the wheel changes.</p>
+<div class="panel compare" id="compare"></div>
+
+<footer>
+  Rates from the Old School RuneScape Wiki's ancient chest article. Item icons hotlinked from the wiki.<br>
+  <a href="https://oldschool.runescape.wiki/w/Ancient_chest" target="_blank" rel="noopener">oldschool.runescape.wiki/w/Ancient_chest</a>
+</footer>
+
+</div>
+
+<script>
+/* ============ constants ============ */
+const CAP = 570000;              // points where one roll maxes out
+const PER_PCT = 8676;            // points per 1%
+const MAX_ROLLS = 6;
+const WIKI = "https://oldschool.runescape.wiki/images/";
+
+const UNIQUES = [
+  {n:"Dexterous prayer scroll", ab:"DEX", w:20, wr:14, wc:12, c:"#8f7fb8", img:"Dexterous_prayer_scroll.png?6b57c"},
+  {n:"Arcane prayer scroll",    ab:"ARC", w:20, wr:14, wc:12, c:"#6f8fc4", img:"Arcane_prayer_scroll.png?1f712"},
+  {n:"Twisted buckler",         ab:"BUCK",w:4,  wr:4,  wc:4,  c:"#c9856a", img:"Twisted_buckler.png?5c5a6"},
+  {n:"Dragon hunter crossbow",  ab:"DHCB",w:4,  wr:4,  wc:4,  c:"#a85f4e", img:"Dragon_hunter_crossbow.png?cc5f3"},
+  {n:"Dinh's bulwark",          ab:"DINH",w:3,  wr:3,  wc:3,  c:"#a8925f", img:"Dinh%27s_bulwark.png?2c9d4"},
+  {n:"Ancestral hat",           ab:"HAT", w:3,  wr:4,  wc:4,  c:"#7bb6a8", img:"Ancestral_hat.png?ec289"},
+  {n:"Ancestral robe top",      ab:"TOP", w:3,  wr:4,  wc:4,  c:"#5f9fc4", img:"Ancestral_robe_top.png?8d9e1"},
+  {n:"Ancestral robe bottom",   ab:"BTM", w:3,  wr:4,  wc:4,  c:"#4f86ad", img:"Ancestral_robe_bottom.png?15de7"},
+  {n:"Dragon claws",            ab:"CLAW",w:3,  wr:3,  wc:3,  c:"#c46a6a", img:"Dragon_claws.png?c85b3"},
+  {n:"Elder maul",              ab:"MAUL",w:2,  wr:2,  wc:2,  c:"#9a86d6", img:"Elder_maul.png?0a875"},
+  {n:"Kodai insignia",          ab:"KODA",w:2,  wr:2,  wc:2,  c:"#a26fd0", img:"Kodai_insignia.png?ec129"},
+  {n:"Twisted bow",             ab:"TBOW",w:2,  wr:2,  wc:2,  c:"#e8b74a", img:"Twisted_bow.png?08f42"}
+];
+const TOTAL_W = UNIQUES.reduce((s,u)=>s+u.w,0);   // 69, live
+const TOTAL_R = UNIQUES.reduce((s,u)=>s+u.wr,0);  // 60, proposed regular
+const TOTAL_C = UNIQUES.reduce((s,u)=>s+u.wc,0);  // 56, proposed challenge mode
+
+// which weighting the odds and the simulator use
+function weightKey(){ return state.weight; }
+function weightTotal(k){ return k==="w"?TOTAL_W : k==="wr"?TOTAL_R : TOTAL_C; }
+function shareOf(u,k){ return u[k]/weightTotal(k); }
+function oddsFor(yourRolls,u,k){ return 1-yourRolls.reduce((acc,p)=>acc*(1-p*shareOf(u,k)),1); }
+function setLabel(k){ return k==="w"?"Live · 69 slots" : k==="wr"?"Proposed · 60 slots" : "Proposed CM · 56 slots"; }
+
+// small icon with an abbreviation chip behind it, so it still reads
+// if the wiki image can't load
+function iconHTML(u,size){
+  return `<span class="ic" style="--ic:${u.c};width:${size}px;height:${size}px">`+
+         `<i>${u.ab}</i><img src="${WIKI+u.img}" alt="${u.n}" loading="lazy" `+
+         `onerror="this.remove()" onload="this.previousElementSibling.style.display='none'"></span>`;
+}
+
+const OUTCOME_COLORS = ["#3b3552","#b47cff","#8d5ae0","#6b3fc0","#4d2a94","#351a6b","#22104a"];
+
+/* ============ state ============ */
+const state = {
+  cm:false,
+  weight:"w",                       // "w" live 69 | "wr" proposed 60 | "wc" proposed CM 56
+  s:[ {label:"Your raid", key:"a", team:26025, you:26025, hex:"#b47cff"} ]
+};
+
+/* ============ maths ============ */
+function rollsFor(points){
+  const out=[]; let left=Math.max(0,points||0);
+  while(left>0 && out.length<MAX_ROLLS){
+    const chunk=Math.min(left,CAP);
+    out.push(chunk/(PER_PCT*100));
+    left-=chunk;
+  }
+  return out;
+}
+function distribution(ps){
+  let d=[1];
+  for(const p of ps){
+    const n=new Array(d.length+1).fill(0);
+    for(let i=0;i<d.length;i++){ n[i]+=d[i]*(1-p); n[i+1]+=d[i]*p; }
+    d=n;
+  }
+  return d;
+}
+const PLAYER_CAP=131070;   // most points one player can bank in a raid
+function model(sc){
+  const team=Math.max(0,sc.team||0);
+  const you=Math.min(Math.max(0,sc.you||0),PLAYER_CAP,team);
+  const share= team>0 ? you/team : 0;
+  const teamRolls=rollsFor(team);
+  const yourRolls=teamRolls.map(p=>p*share);
+  const teamDist=distribution(teamRolls);
+  const yourDist=distribution(yourRolls);
+  const pTeam=1-teamDist[0];
+  const pYou=1-yourDist[0];
+  const expected=yourRolls.reduce((a,b)=>a+b,0);
+  const k=weightKey();
+  const perItem=UNIQUES.map(u=>1-yourRolls.reduce((acc,p)=>acc*(1-p*shareOf(u,k)),1));
+  const pet=1-yourRolls.reduce((acc,p)=>acc*(1-p/53),1);
+  return {team,you,share,teamRolls,yourRolls,teamDist,yourDist,pTeam,pYou,expected,perItem,pet};
+}
+const pct=v=>(v*100);
+const fmtPct=v=>{const p=pct(v); return p>=10?p.toFixed(1):p>=1?p.toFixed(2):p.toFixed(3);};
+const oneIn=v=>v<=0?"never":"1 in "+Math.round(1/v).toLocaleString();
+const nfmt=n=>Math.round(n).toLocaleString();
+function raidsFor(p,conf){ if(p<=0) return "∞"; if(p>=1) return "1"; return Math.ceil(Math.log(1-conf)/Math.log(1-p)).toLocaleString(); }
+
+/* ============ svg helpers ============ */
+const SVGNS="http://www.w3.org/2000/svg";
+function polar(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+function arcPath(cx,cy,ro,ri,a0,a1){
+  const span=Math.min(a1-a0,359.98);
+  a1=a0+span;
+  const big=span>180?1:0;
+  const [x0,y0]=polar(cx,cy,ro,a0),[x1,y1]=polar(cx,cy,ro,a1);
+  const [x2,y2]=polar(cx,cy,ri,a1),[x3,y3]=polar(cx,cy,ri,a0);
+  return `M${x0} ${y0} A${ro} ${ro} 0 ${big} 1 ${x1} ${y1} L${x2} ${y2} A${ri} ${ri} 0 ${big} 0 ${x3} ${y3} Z`;
+}
+function buildWheel(host, segs, opts={}){
+  const S=320, cx=S/2, cy=S/2, ro=opts.ro||146, ri=opts.ri||88;
+  host.querySelectorAll("svg,.hub").forEach(n=>n.remove());
+  const svg=document.createElementNS(SVGNS,"svg");
+  svg.setAttribute("viewBox",`0 0 ${S} ${S}`);
+  svg.setAttribute("role","img");
+  svg.setAttribute("aria-label",opts.aria||"probability wheel");
+  const g=document.createElementNS(SVGNS,"g");
+  g.setAttribute("class","spinner");
+  g.style.transformOrigin="50% 50%";
+  svg.appendChild(g);
+
+  // outer rim
+  const rim=document.createElementNS(SVGNS,"circle");
+  rim.setAttribute("cx",cx);rim.setAttribute("cy",cy);rim.setAttribute("r",ro+5);
+  rim.setAttribute("fill","none");rim.setAttribute("stroke","#332c4e");rim.setAttribute("stroke-width","1");
+  svg.insertBefore(rim,g);
+
+  let a=0; const mids=[], bounds=[], paths=[];
+  segs.forEach((s,i)=>{
+    const span=s.p*360;
+    if(span<=0){mids.push(a);bounds.push({a0:a,span:0});paths.push(null);return;}
+    const path=document.createElementNS(SVGNS,"path");
+    path.setAttribute("d",arcPath(cx,cy,ro,ri,a,a+span));
+    path.setAttribute("fill",s.c);
+    path.setAttribute("stroke","#0d0b14");
+    path.setAttribute("stroke-width","1.5");
+    path.setAttribute("class","slice");
+    const t=document.createElementNS(SVGNS,"title");
+    t.textContent=`${s.n} — ${fmtPct(s.p)}%`;
+    path.appendChild(t);
+    g.appendChild(path);
+    mids.push(a+span/2);
+    bounds.push({a0:a,span});
+    paths.push(path);
+    a+=span;
+  });
+
+  // pointer
+  const ptr=document.createElementNS(SVGNS,"path");
+  ptr.setAttribute("d",`M${cx-8} ${cy-ro-8} L${cx+8} ${cy-ro-8} L${cx} ${cy-ro+8} Z`);
+  ptr.setAttribute("fill","#ded3c0");
+  svg.appendChild(ptr);
+
+  host.insertBefore(svg,host.firstChild);
+  if(opts.hub){
+    const hub=document.createElement("div");
+    hub.className="hub";
+    hub.innerHTML=opts.hub;
+    host.appendChild(hub);
+  }
+  return {svg,g,mids,bounds,paths,ro,ri,S};
+}
+function spinTo(ref,index,turns=5){
+  const g=ref.g;
+  const b=ref.bounds[index];
+  if(!b) return 0;
+  // land anywhere inside the slice, not on its midpoint — with a margin
+  // so the pointer never sits right on a boundary
+  const margin=Math.min(b.span*0.15,4);
+  const landing=b.a0+margin+Math.random()*Math.max(b.span-margin*2,0.01);
+
+  const current=+(g.dataset.rot||0);
+  const wanted=((-landing)%360+360)%360;
+  const forward=((wanted-current)%360+360)%360;
+  const target=current+turns*360+forward;
+
+  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  g.style.transition=reduce?"none":"transform 2.9s cubic-bezier(.13,.72,.1,1)";
+  g.style.transform=`rotate(${target}deg)`;
+  g.dataset.rot=target;
+
+  if(ref.iconLayer){
+    ref.iconLayer.style.transition=g.style.transition;
+    ref.iconLayer.style.transform=`rotate(${target}deg)`;
+    ref.iconLayer.querySelectorAll(".wicon").forEach(im=>{
+      im.style.transition=g.style.transition;
+      im.style.transform=`translate(-50%,-50%) rotate(${-target}deg)`;
+    });
+  }
+
+  // mark the winner once it stops
+  const dur=reduce?0:2900;
+  ref.paths.forEach(p=>{ if(p){p.setAttribute("stroke","#0d0b14");p.setAttribute("stroke-width","1.5");} });
+  setTimeout(()=>{
+    const win=ref.paths[index];
+    if(win){ win.setAttribute("stroke","#f2ecdf"); win.setAttribute("stroke-width","3"); }
+  },dur);
+  return dur;
+}
+function weightedPick(items,weights){
+  const tot=weights.reduce((a,b)=>a+b,0);
+  let r=Math.random()*tot;
+  for(let i=0;i<items.length;i++){ r-=weights[i]; if(r<=0) return i; }
+  return items.length-1;
+}
+
+/* ============ setup UI ============ */
+function renderSetup(){
+  const host=document.getElementById("setup");
+  host.innerHTML="";
+  state.s.forEach((sc,i)=>{
+    const p=document.createElement("div");
+    p.className="panel";
+    p.innerHTML=`
+      <p class="scen-name"><span class="pip ${sc.key}"></span>${sc.label}</p>
+
+      <label class="fld">
+        <span>Total team points <em id="tv${i}">${nfmt(sc.team)}</em></span>
+        <input type="number" min="0" step="1000" id="team${i}" value="${sc.team}">
+      </label>
+
+      <label class="fld">
+        <span>Your personal points <em id="yv${i}">${nfmt(sc.you)}</em></span>
+        <input type="number" min="0" max="${PLAYER_CAP}" step="500" id="you${i}" value="${sc.you}">
+      </label>
+      <div class="presets"><button type="button" id="solo${i}">Solo — all of them mine</button></div>
+
+      <p class="total" id="tt${i}"></p>
+    `;
+    host.appendChild(p);
+
+    const refresh=()=>{
+      const t=Math.max(0,sc.team);
+      const y=Math.min(sc.you,PLAYER_CAP,t);
+      p.querySelector("#tv"+i).textContent=nfmt(t);
+      p.querySelector("#yv"+i).textContent=nfmt(y);
+      const rolls=rollsFor(t).length;
+      p.querySelector("#tt"+i).innerHTML=
+        `<b>${nfmt(t)}</b> points · ${rolls} roll${rolls===1?"":"s"}` +
+        `<br><span class="dim">You hold ${t? (y/t*100).toFixed(0):0}% of them` +
+        (sc.you>PLAYER_CAP?` · personal cap is ${nfmt(PLAYER_CAP)}`:``) +
+        (sc.you>t?` · more than the team total`:``) + `</span>`;
+      renderAll();
+    };
+    p.querySelector("#team"+i).oninput=e=>{ sc.team=Math.max(0,+e.target.value||0); refresh(); };
+    p.querySelector("#you"+i).oninput=e=>{ sc.you=Math.max(0,+e.target.value||0); refresh(); };
+    p.querySelector("#solo"+i).onclick=()=>{
+      sc.you=Math.min(sc.team,PLAYER_CAP);
+      p.querySelector("#you"+i).value=sc.you;
+      refresh();
+    };
+    refresh();
+  });
+}
+
+/* ============ wheel one ============ */
+const wheelRefs={};
+const C_NONE="#3b3552", C_MATE="#5d4488", C_YOU="#b47cff", C_YOU2="#e3c6ff";
+
+function outcomeSegs(m){
+  const noneAtAll = m.teamRolls.reduce((a,p)=>a*(1-p),1);   // nobody gets one
+  const noneForYou = m.yourDist[0];                          // you get none
+  const mateOnly = Math.max(noneForYou-noneAtAll,0);
+  const one = m.yourDist[1]||0;
+  const multi = m.yourDist.slice(2).reduce((a,b)=>a+b,0);
+  const segs=[
+    {n:"White light — nobody gets one", p:noneAtAll, c:C_NONE},
+    {n:"A teammate takes it",           p:mateOnly,  c:C_MATE},
+    {n:"Yours",                         p:one,       c:C_YOU}
+  ];
+  if(multi>0.00005) segs.push({n:"Two or more, yours", p:multi, c:C_YOU2});
+  return segs;
+}
+
+function renderStage(){
+  const stage=document.getElementById("stage");
+  stage.innerHTML="";
+  const sc=state.s[0], i=0;
+  const m=model(sc);
+  const card=document.createElement("div");
+  card.className="panel wcard";
+  card.innerHTML=`
+    <div class="beam ${m.pYou>0.5?"purple":""}" id="beam${i}"></div>
+    <div class="wgrid">
+      <div class="wleft">
+        <div class="wheelbox" id="wb${i}"></div>
+      </div>
+      <div class="wright">
+        <div class="twin">
+          <div class="tw">
+            <span class="twn" style="color:${C_YOU}">${fmtPct(m.pYou)}%</span>
+            <span class="twl">yours</span>
+            <span class="twx">${oneIn(m.pYou)}</span>
+          </div>
+          <div class="tw">
+            <span class="twn" style="color:${C_MATE}">${fmtPct(m.pTeam)}%</span>
+            <span class="twl">anyone's</span>
+            <span class="twx">${oneIn(m.pTeam)}</span>
+          </div>
+        </div>
+        <div class="legend" id="lg${i}"></div>
+        <div class="stats" id="st${i}"></div>
+        <button class="openbtn" id="ob${i}">Open the chest</button>
+        <div class="result" id="rs${i}"></div>
+      </div>
+    </div>
+  `;
+  stage.appendChild(card);
+
+  const segs=outcomeSegs(m);
+  const ref=buildWheel(card.querySelector("#wb"+i),segs,{
+    hub:`<span class="big" style="color:${C_YOU}">${fmtPct(m.pYou)}%</span><span class="lbl">yours</span>`,
+    aria:"raid outcome wheel"
+  });
+  wheelRefs[i]={ref,segs,m};
+
+  const lg=card.querySelector("#lg"+i);
+  segs.forEach(sg=>{
+    const r=document.createElement("div");
+    r.className="lrow";
+    r.innerHTML=`<span class="swatch" style="background:${sg.c}"></span><span>${sg.n}</span><span class="val">${fmtPct(sg.p)}%</span>`;
+    lg.appendChild(r);
+  });
+
+  const rollLine=m.teamRolls.length? m.teamRolls.map(p=>fmtPct(p)+"%").join(" + ") : "none";
+  const st=card.querySelector("#st"+i);
+  [
+    ["Rolls the raid gets", m.teamRolls.length+" ("+rollLine+")"],
+    ["Drop lands on you", m.team? Math.round(m.share*100)+"%":"—"],
+    ["Your uniques per raid", m.expected.toFixed(3)],
+    ["Raids for 50% odds", raidsFor(m.pYou,0.5)],
+    ["Raids for 90% odds", raidsFor(m.pYou,0.9)],
+    ["Olmlet", oneIn(m.pet)]
+  ].forEach(([k,v])=>{
+    const r=document.createElement("div");
+    r.className="srow";
+    r.innerHTML=`<span>${k}</span><b>${v}</b>`;
+    st.appendChild(r);
+  });
+
+  card.querySelector("#ob"+i).onclick=()=>openChest(i,card);
+}
+
+/* ============ simulate ============ */
+const MATE_LINES=[
+  "A teammate rips a {i} in front of you.",
+  "Someone else in the raid pulls a {i}.",
+  "Not yours. {i} goes to a teammate.",
+  "The beam goes purple — for somebody else. {i}."
+];
+function pickItem(){
+  const wk=weightKey();
+  return UNIQUES[weightedPick(UNIQUES,UNIQUES.map(u=>u[wk]))];
+}
+function openChest(i,card){
+  const sc=state.s[i];
+  const m=model(sc);
+  const btn=card.querySelector("#ob"+i);
+  const out=card.querySelector("#rs"+i);
+  const beam=card.querySelector("#beam"+i);
+  btn.disabled=true; out.innerHTML="";
+
+  // resolve every roll: nobody / you / a teammate
+  let mine=0, theirs=0;
+  m.teamRolls.forEach(p=>{
+    if(Math.random()>=p) return;
+    if(Math.random()<m.share) mine++; else theirs++;
+  });
+
+  const segs=wheelRefs[i].segs;
+  const wantName = mine===0
+      ? (theirs===0 ? "White light — nobody gets one" : "A teammate takes it")
+      : (mine===1 ? "Yours" : "Two or more, yours");
+  let idx=segs.findIndex(sg=>sg.n===wantName);
+  if(idx<0) idx=segs.findIndex(sg=>sg.n==="Yours");
+  const wait= idx>=0 ? spinTo(wheelRefs[i].ref,idx) : 0;
+
+  const myItems=[], theirItems=[];
+  let pet=false;
+  for(let k=0;k<mine;k++){ myItems.push(pickItem()); if(Math.random()<1/53) pet=true; }
+  for(let k=0;k<theirs;k++){ theirItems.push(pickItem()); }
+  const kit=state.cm && Math.random()<1/75;
+  const dust=state.cm && Math.random()<1/400;
+
+  setTimeout(()=>{
+    btn.disabled=false;
+    beam.className="beam"+(mine>0||theirs>0?" purple":dust?" dustc":kit?" kitc":"");
+    let html="";
+    if(myItems.length){
+      html+=myItems.map(it=>`<span class="won">${iconHTML(it,38)} ${it.n}</span>`).join("");
+    }
+    if(theirItems.length){
+      html+=theirItems.map(it=>{
+        const line=MATE_LINES[Math.floor(Math.random()*MATE_LINES.length)];
+        return `<span class="mate">${iconHTML(it,26)} ${line.replace("{i}",it.n)}</span>`;
+      }).join("");
+    }
+    if(!myItems.length && !theirItems.length){
+      html+=`<span>White light. Two common drops.</span>`;
+    }
+    const extra=[];
+    if(pet) extra.push("Olmlet");
+    if(kit) extra.push("Twisted ancestral colour kit");
+    if(dust) extra.push("Metamorphic dust");
+    if(extra.length) html+=`<span style="color:var(--kit)">+ ${extra.join(" + ")}</span>`;
+    out.innerHTML=html;
+
+    if(myItems.length) spinTo(itemWheels[state.weight],UNIQUES.indexOf(myItems[0]),4);
+  },wait+30);
+}
+
+/* ============ wheel two ============ */
+
+function buildItemWheel(key){
+  const host=document.getElementById("wheel_"+key);
+  const layer=document.getElementById("icons_"+key);
+  const tot=weightTotal(key);
+  const segs=UNIQUES.map(u=>({n:u.n+" ("+u[key]+"/"+tot+")",p:u[key]/tot,c:u.c}));
+  const wheel=buildWheel(host,segs,{
+    hub:`<span class="big">${tot}</span><span class="lbl">slots</span>`,
+    aria:setLabel(key)+" item wheel"
+  });
+  wheel.iconLayer=layer;
+  layer.innerHTML="";
+  layer.style.transform="rotate(0deg)";
+  UNIQUES.forEach((u,i)=>{
+    const a=(wheel.mids[i]-90)*Math.PI/180;
+    const r=117/320*100;
+    const holder=document.createElement("div");
+    holder.className="wicon";
+    holder.style.left=(50+r*Math.cos(a))+"%";
+    holder.style.top=(50+r*Math.sin(a))+"%";
+    holder.title=u.n+" — "+u[key]+"/"+tot;
+    holder.innerHTML=iconHTML(u,26);
+    layer.appendChild(holder);
+  });
+  return wheel;
+}
+const itemWheels={};
+function renderWheels(){
+  ["w","wr","wc"].forEach(k=>{ itemWheels[k]=buildItemWheel(k); });
+  markActive();
+}
+function markActive(){
+  document.querySelectorAll("#wheelpair .panel").forEach(el=>{
+    el.classList.toggle("live", el.dataset.k===state.weight);
+  });
+}
+function renderPicker(){
+  const host=document.getElementById("pick");
+  host.innerHTML="";
+  const lbl=document.createElement("span");
+  lbl.className="picklbl";
+  lbl.textContent="Odds and the chest simulator use:";
+  host.appendChild(lbl);
+  ["w","wr","wc"].forEach(k=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.textContent=setLabel(k);
+    b.className="pickbtn"+(state.weight===k?" on":"");
+    b.onclick=()=>{ state.weight=k; renderPicker(); markActive(); renderAll(); };
+    host.appendChild(b);
+  });
+}
+function renderItemTable(){
+  const m=model(state.s[0]);
+  const body=document.getElementById("ibody");
+  body.innerHTML="";
+  UNIQUES.forEach((u,i)=>{
+    const now=u.w/TOTAL_W, reg=u.wr/TOTAL_R, cmw=u.wc/TOTAL_C;
+    const d=v=>{
+      const x=(v/now-1)*100;
+      const cls=x>0.05?"up":x<-0.05?"down":"flat";
+      return `<td class="r mono ${cls}">${x>0?"+":""}${x.toFixed(1)}%</td>`;
+    };
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td class="nm"><span class="chip" style="background:${u.c}"></span>${iconHTML(u,22)}<span>${u.n}</span></td>
+      <td class="r mono">${u.w}</td><td class="r mono dim2">${(now*100).toFixed(1)}%</td>
+      <td class="r mono">${u.wr}</td><td class="r mono dim2">${(reg*100).toFixed(1)}%</td>${d(reg)}
+      <td class="r mono">${u.wc}</td><td class="r mono dim2">${(cmw*100).toFixed(1)}%</td>${d(cmw)}
+      <td class="r mono a">${oneIn(m.perItem[i])}</td>`;
+    body.appendChild(tr);
+  });
+  const scr=[UNIQUES[0],UNIQUES[1]];
+  document.getElementById("tableNote").innerHTML =
+    `Change columns compare each proposed share against the live one. `+
+    `Per raid uses <b>${setLabel(state.weight)}</b> at your current points.`;
+}
+
+/* ============ compare strip ============ */
+const KEYS=["w","wr","wc"];
+const KEYCOL={w:"var(--beam)",wr:"var(--gold)",wc:"var(--kit)"};
+function renderCompare(){
+  const m=model(state.s[0]);
+  const host=document.getElementById("compare");
+  host.innerHTML="";
+  const picks=[UNIQUES[11],UNIQUES[5],UNIQUES[0],UNIQUES[3]]; // tbow, anc hat, dex scroll, dhcb
+  picks.forEach(u=>{
+    const vals=KEYS.map(k=>oddsFor(m.yourRolls,u,k));
+    const max=Math.max(...vals,1e-9);
+    const el=document.createElement("div");
+    el.className="cmp";
+    el.innerHTML=`<div class="k">${iconHTML(u,20)} ${u.n}</div>
+      <div class="bars">${KEYS.map((k,j)=>`
+        <div class="bar">
+          <span class="tag">${k==="w"?"69":k==="wr"?"60":"56"}</span>
+          <span class="track"><span class="fill" style="width:${vals[j]/max*100}%;background:${KEYCOL[k]}"></span></span>
+          <span class="num">${oneIn(vals[j])}</span>
+        </div>`).join("")}</div>`;
+    host.appendChild(el);
+  });
+}
+
+/* ============ cm section ============ */
+/* ============ boot ============ */
+function renderAll(){ renderStage(); renderCompare(); renderItemTable(); }
+
+document.getElementById("cm").onchange=e=>{
+  state.cm=e.target.checked;
+  document.getElementById("cmToggle").classList.toggle("on",state.cm);
+  renderAll();
+};
+
+renderSetup();
+renderPicker();
+renderWheels();
+renderAll();
+</script>
+</body>
+</html>
+
