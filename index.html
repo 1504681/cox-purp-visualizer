@@ -478,9 +478,15 @@ function model(sc){
   const team=Math.max(0,sc.team||0);
   const you=Math.min(Math.max(0,sc.you||0),PLAYER_CAP,team);
   const share= team>0 ? you/team : 0;
-  let teamRolls=rollsFor(team);
-  if(state.creator) teamRolls=teamRolls.map(p=>Math.min(1,p*2));
-  const yourRolls=teamRolls.map(p=>p*share);
+  const boost=state.creator?2:1;   // creator multiplier applies to your cut only
+  const rollPairs=rollsFor(team).map(p=>{
+    let pm=p*share*boost, pt=p*(1-share);
+    const tot=pm+pt;
+    if(tot>1){ pm/=tot; pt/=tot; }
+    return {pm,pt};
+  });
+  const teamRolls=rollPairs.map(r=>r.pm+r.pt);
+  const yourRolls=rollPairs.map(r=>r.pm);
   const teamDist=distribution(teamRolls);
   const yourDist=distribution(yourRolls);
   const pTeam=1-teamDist[0];
@@ -489,7 +495,8 @@ function model(sc){
   const k=weightKey();
   const perItem=UNIQUES.map(u=>1-yourRolls.reduce((acc,p)=>acc*(1-p*shareOf(u,k)),1));
   const pet=1-yourRolls.reduce((acc,p)=>acc*(1-p/53),1);
-  return {team,you,share,teamRolls,yourRolls,teamDist,yourDist,pTeam,pYou,expected,perItem,pet};
+  const effShare= share>0 ? share*boost/(1-share+share*boost) : 0;
+  return {team,you,share,effShare,rollPairs,teamRolls,yourRolls,teamDist,yourDist,pTeam,pYou,expected,perItem,pet};
 }
 const pct=v=>(v*100);
 const fmtPct=v=>{const p=pct(v); return p>=10?p.toFixed(1):p>=1?p.toFixed(2):p.toFixed(3);};
@@ -745,7 +752,7 @@ function renderStage(){
   const st=card.querySelector("#st"+i);
   [
     ["Rolls the raid gets", m.teamRolls.length+" ("+rollLine+")"],
-    ["Drop lands on you", m.team? Math.round(m.share*100)+"%":"—"],
+    ["Drop lands on you", m.team? Math.round(m.effShare*100)+"%":"—"],
     ["Your uniques per raid", m.expected.toFixed(3)],
     ["Raids for 50% odds", raidsFor(m.pYou,0.5)],
     ["Raids for 90% odds", raidsFor(m.pYou,0.9)],
@@ -787,9 +794,10 @@ function openChest(i,card){
 
   // resolve every roll: nobody / you / a teammate
   let mine=0, theirs=0;
-  m.teamRolls.forEach(p=>{
-    if(Math.random()>=p) return;
-    if(Math.random()<m.share) mine++; else theirs++;
+  m.rollPairs.forEach(({pm,pt})=>{
+    const r=Math.random();
+    if(r<pm) mine++;
+    else if(r<pm+pt) theirs++;
   });
 
   const segs=wheelRefs[i].segs;
@@ -870,9 +878,10 @@ function openMany(i,card){
   const tick=()=>{
     n++;
     let mine=0, theirs=0;
-    m.teamRolls.forEach(p=>{
-      if(Math.random()>=p) return;
-      if(Math.random()<m.share) mine++; else theirs++;
+    m.rollPairs.forEach(({pm,pt})=>{
+      const r=Math.random();
+      if(r<pm) mine++;
+      else if(r<pm+pt) theirs++;
     });
     const myItems=[], theirItems=[];
     for(let k=0;k<mine;k++){ myItems.push(pickItem()); if(Math.random()<1/53) pets++; }
