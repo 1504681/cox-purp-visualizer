@@ -832,6 +832,11 @@ function openMany(i,card){
   card.querySelector("#bth"+i).textContent="Team's purples";
 
   const segs=wheelRefs[i].segs, ref=wheelRefs[i].ref;
+  // pace the run so the whole batch finishes in ~30s at most,
+  // one raid per second when the batch is small
+  const stepMs=Math.max(60,Math.min(1000,Math.floor(30000/total)));
+  const spinMs=Math.max(45,Math.round(stepMs*0.65));
+  const spinTurns=stepMs>=400?1:0;
   let n=0, mineCount=0, teamCount=0, whites=0, pets=0, kits=0, dusts=0;
 
   const addRow=(list,raid,u)=>{
@@ -859,8 +864,8 @@ function openMany(i,card){
         : (mine===1 ? "Yours" : "Two or more, yours");
     let idx=segs.findIndex(sg=>sg.n===wantName);
     if(idx<0) idx=0;
-    spinTo(ref,idx,1,650);
-    if(myItems.length) spinTo(itemWheels[state.weight],UNIQUES.indexOf(myItems[0]),1,650);
+    spinTo(ref,idx,spinTurns,spinMs);
+    if(myItems.length) spinTo(itemWheels[state.weight],UNIQUES.indexOf(myItems[0]),spinTurns,spinMs);
     card.querySelector("#beam"+i).className="beam"+(mine||theirs?" purple":"");
 
     myItems.forEach(u=>{ addRow(mineList,n,u); mineCount++; });
@@ -890,7 +895,7 @@ function openMany(i,card){
     }
   };
   tick();
-  if(n<total) bulkTimer=setInterval(tick,1000);
+  if(n<total) bulkTimer=setInterval(tick,stepMs);
 }
 
 /* ============ wheel two ============ */
