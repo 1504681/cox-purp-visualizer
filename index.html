@@ -236,7 +236,7 @@ input[type=range]{width:100%;accent-color:var(--moss);background:transparent}
 
 
 /* ---------- item wheels: live vs proposed ---------- */
-.wheelpair{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wheelpair{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .wheelpair .panel{transition:border-color .25s}
 .wheelpair .panel.live{border-color:var(--gold)}
 .wtitle{
@@ -346,11 +346,6 @@ footer a{color:#8d7f5c}
 <hr class="divide">
 
 <div class="wheelpair" id="wheelpair">
-  <div class="panel" data-k="w">
-    <h3 class="wtitle">Old wheel <b>69 slots</b></h3>
-    <div class="wheelbox" id="wheel_w"><div class="iconlayer" id="icons_w"></div></div>
-    <p class="subline" style="margin-top:12px">Scrolls held 40 of 69</p>
-  </div>
   <div class="panel" data-k="wr">
     <h3 class="wtitle">Live — regular <b>60 slots</b></h3>
     <div class="wheelbox" id="wheel_wr"><div class="iconlayer" id="icons_wr"></div></div>
@@ -367,14 +362,11 @@ footer a{color:#8d7f5c}
   <table class="itable">
     <thead><tr>
       <th>Item</th>
-      <th class="r">Old 69</th>
-      <th class="r">Share</th>
       <th class="r">Live 60</th>
       <th class="r">Share</th>
-      <th class="r">Change</th>
       <th class="r">CM 56</th>
       <th class="r">Share</th>
-      <th class="r">Change</th>
+      <th class="r">CM vs live</th>
       <th class="r">Per raid</th>
     </tr></thead>
     <tbody id="ibody"></tbody>
@@ -400,29 +392,28 @@ const MAX_ROLLS = 6;
 const WIKI = "https://oldschool.runescape.wiki/images/";
 
 const UNIQUES = [
-  {n:"Dexterous prayer scroll", ab:"DEX", w:20, wr:14, wc:12, c:"#8f7fb8", img:"Dexterous_prayer_scroll.png?6b57c"},
-  {n:"Arcane prayer scroll",    ab:"ARC", w:20, wr:14, wc:12, c:"#6f8fc4", img:"Arcane_prayer_scroll.png?1f712"},
-  {n:"Twisted buckler",         ab:"BUCK",w:4,  wr:4,  wc:4,  c:"#c9856a", img:"Twisted_buckler.png?5c5a6"},
-  {n:"Dragon hunter crossbow",  ab:"DHCB",w:4,  wr:4,  wc:4,  c:"#a85f4e", img:"Dragon_hunter_crossbow.png?cc5f3"},
-  {n:"Dinh's bulwark",          ab:"DINH",w:3,  wr:3,  wc:3,  c:"#a8925f", img:"Dinh%27s_bulwark.png?2c9d4"},
-  {n:"Ancestral hat",           ab:"HAT", w:3,  wr:4,  wc:4,  c:"#7bb6a8", img:"Ancestral_hat.png?ec289"},
-  {n:"Ancestral robe top",      ab:"TOP", w:3,  wr:4,  wc:4,  c:"#5f9fc4", img:"Ancestral_robe_top.png?8d9e1"},
-  {n:"Ancestral robe bottom",   ab:"BTM", w:3,  wr:4,  wc:4,  c:"#4f86ad", img:"Ancestral_robe_bottom.png?15de7"},
-  {n:"Dragon claws",            ab:"CLAW",w:3,  wr:3,  wc:3,  c:"#c46a6a", img:"Dragon_claws.png?c85b3"},
-  {n:"Elder maul",              ab:"MAUL",w:2,  wr:2,  wc:2,  c:"#9a86d6", img:"Elder_maul.png?0a875"},
-  {n:"Kodai insignia",          ab:"KODA",w:2,  wr:2,  wc:2,  c:"#a26fd0", img:"Kodai_insignia.png?ec129"},
-  {n:"Twisted bow",             ab:"TBOW",w:2,  wr:2,  wc:2,  c:"#e8b74a", img:"Twisted_bow.png?08f42"}
+  {n:"Dexterous prayer scroll", ab:"DEX", wr:14, wc:12, c:"#8f7fb8", img:"Dexterous_prayer_scroll.png?6b57c"},
+  {n:"Arcane prayer scroll",    ab:"ARC", wr:14, wc:12, c:"#6f8fc4", img:"Arcane_prayer_scroll.png?1f712"},
+  {n:"Twisted buckler",         ab:"BUCK",wr:4,  wc:4,  c:"#c9856a", img:"Twisted_buckler.png?5c5a6"},
+  {n:"Dragon hunter crossbow",  ab:"DHCB",wr:4,  wc:4,  c:"#a85f4e", img:"Dragon_hunter_crossbow.png?cc5f3"},
+  {n:"Dinh's bulwark",          ab:"DINH",wr:3,  wc:3,  c:"#a8925f", img:"Dinh%27s_bulwark.png?2c9d4"},
+  {n:"Ancestral hat",           ab:"HAT", wr:4,  wc:4,  c:"#7bb6a8", img:"Ancestral_hat.png?ec289"},
+  {n:"Ancestral robe top",      ab:"TOP", wr:4,  wc:4,  c:"#5f9fc4", img:"Ancestral_robe_top.png?8d9e1"},
+  {n:"Ancestral robe bottom",   ab:"BTM", wr:4,  wc:4,  c:"#4f86ad", img:"Ancestral_robe_bottom.png?15de7"},
+  {n:"Dragon claws",            ab:"CLAW",wr:3,  wc:3,  c:"#c46a6a", img:"Dragon_claws.png?c85b3"},
+  {n:"Elder maul",              ab:"MAUL",wr:2,  wc:2,  c:"#9a86d6", img:"Elder_maul.png?0a875"},
+  {n:"Kodai insignia",          ab:"KODA",wr:2,  wc:2,  c:"#a26fd0", img:"Kodai_insignia.png?ec129"},
+  {n:"Twisted bow",             ab:"TBOW",wr:2,  wc:2,  c:"#e8b74a", img:"Twisted_bow.png?08f42"}
 ];
-const TOTAL_W = UNIQUES.reduce((s,u)=>s+u.w,0);   // 69, old wheel
 const TOTAL_R = UNIQUES.reduce((s,u)=>s+u.wr,0);  // 60, live regular
 const TOTAL_C = UNIQUES.reduce((s,u)=>s+u.wc,0);  // 56, live challenge mode
 
 // which weighting the odds and the simulator use
 function weightKey(){ return state.weight; }
-function weightTotal(k){ return k==="w"?TOTAL_W : k==="wr"?TOTAL_R : TOTAL_C; }
+function weightTotal(k){ return k==="wr"?TOTAL_R : TOTAL_C; }
 function shareOf(u,k){ return u[k]/weightTotal(k); }
 function oddsFor(yourRolls,u,k){ return 1-yourRolls.reduce((acc,p)=>acc*(1-p*shareOf(u,k)),1); }
-function setLabel(k){ return k==="w"?"Old wheel · 69 slots" : k==="wr"?"Live · 60 slots" : "Live CM · 56 slots"; }
+function setLabel(k){ return k==="wr"?"Live · 60 slots" : "Live CM · 56 slots"; }
 
 // small icon with an abbreviation chip behind it, so it still reads
 // if the wiki image can't load
@@ -944,7 +935,7 @@ function buildItemWheel(key){
 }
 const itemWheels={};
 function renderWheels(){
-  ["w","wr","wc"].forEach(k=>{ itemWheels[k]=buildItemWheel(k); });
+  ["wr","wc"].forEach(k=>{ itemWheels[k]=buildItemWheel(k); });
   markActive();
 }
 function markActive(){
@@ -957,30 +948,26 @@ function renderItemTable(){
   const body=document.getElementById("ibody");
   body.innerHTML="";
   UNIQUES.forEach((u,i)=>{
-    const now=u.w/TOTAL_W, reg=u.wr/TOTAL_R, cmw=u.wc/TOTAL_C;
-    const d=v=>{
-      const x=(v/now-1)*100;
-      const cls=x>0.05?"up":x<-0.05?"down":"flat";
-      return `<td class="r mono ${cls}">${x>0?"+":""}${x.toFixed(1)}%</td>`;
-    };
+    const reg=u.wr/TOTAL_R, cmw=u.wc/TOTAL_C;
+    const x=(cmw/reg-1)*100;
+    const cls=x>0.05?"up":x<-0.05?"down":"flat";
     const tr=document.createElement("tr");
     tr.innerHTML=`
       <td class="nm"><span class="chip" style="background:${u.c}"></span>${iconHTML(u,22)}<span>${u.n}</span></td>
-      <td class="r mono">${u.w}</td><td class="r mono dim2">${(now*100).toFixed(1)}%</td>
-      <td class="r mono">${u.wr}</td><td class="r mono dim2">${(reg*100).toFixed(1)}%</td>${d(reg)}
-      <td class="r mono">${u.wc}</td><td class="r mono dim2">${(cmw*100).toFixed(1)}%</td>${d(cmw)}
+      <td class="r mono">${u.wr}</td><td class="r mono dim2">${(reg*100).toFixed(1)}%</td>
+      <td class="r mono">${u.wc}</td><td class="r mono dim2">${(cmw*100).toFixed(1)}%</td>
+      <td class="r mono ${cls}">${x>0?"+":""}${x.toFixed(1)}%</td>
       <td class="r mono a">${oneIn(m.perItem[i])}</td>`;
     body.appendChild(tr);
   });
-  const scr=[UNIQUES[0],UNIQUES[1]];
   document.getElementById("tableNote").innerHTML =
-    `Change columns compare each live share against the old 69-slot wheel. `+
-    `Per raid uses <b>${setLabel(state.weight)}</b> at your current points — flip the Challenge Mode toggle to switch wheels.`;
+    `CM vs live compares each item's slice of the 56-slot CM wheel against the 60-slot regular one. `+
+    `Per raid uses <b>${setLabel(state.weight)}</b> at your current points — the Challenge Mode toggle switches wheels.`;
 }
 
 /* ============ compare strip ============ */
-const KEYS=["w","wr","wc"];
-const KEYCOL={w:"var(--beam)",wr:"var(--gold)",wc:"var(--kit)"};
+const KEYS=["wr","wc"];
+const KEYCOL={wr:"var(--gold)",wc:"var(--kit)"};
 function renderCompare(){
   const m=model(state.s[0]);
   const host=document.getElementById("compare");
@@ -994,7 +981,7 @@ function renderCompare(){
     el.innerHTML=`<div class="k">${iconHTML(u,20)} ${u.n}</div>
       <div class="bars">${KEYS.map((k,j)=>`
         <div class="bar">
-          <span class="tag">${k==="w"?"69":k==="wr"?"60":"56"}</span>
+          <span class="tag">${k==="wr"?"60":"56"}</span>
           <span class="track"><span class="fill" style="width:${vals[j]/max*100}%;background:${KEYCOL[k]}"></span></span>
           <span class="num">${oneIn(vals[j])}</span>
         </div>`).join("")}</div>`;
