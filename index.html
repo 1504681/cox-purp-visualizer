@@ -347,12 +347,12 @@ footer a{color:#8d7f5c}
 
 <div class="wheelpair" id="wheelpair">
   <div class="panel" data-k="wr">
-    <h3 class="wtitle">Live — regular <b>60 slots</b></h3>
+    <h3 class="wtitle">Regular <b>60 slots</b></h3>
     <div class="wheelbox" id="wheel_wr"><div class="iconlayer" id="icons_wr"></div></div>
     <p class="subline" style="margin-top:12px">Scrolls hold 28 of 60</p>
   </div>
   <div class="panel" data-k="wc">
-    <h3 class="wtitle">Live — challenge mode <b>56 slots</b></h3>
+    <h3 class="wtitle">Challenge Mode <b>56 slots</b></h3>
     <div class="wheelbox" id="wheel_wc"><div class="iconlayer" id="icons_wc"></div></div>
     <p class="subline" style="margin-top:12px">Scrolls hold 24 of 56</p>
   </div>
@@ -362,11 +362,11 @@ footer a{color:#8d7f5c}
   <table class="itable">
     <thead><tr>
       <th>Item</th>
-      <th class="r">Live 60</th>
+      <th class="r">Regular</th>
       <th class="r">Share</th>
-      <th class="r">CM 56</th>
+      <th class="r">CM</th>
       <th class="r">Share</th>
-      <th class="r">CM vs live</th>
+      <th class="r">CM vs regular</th>
       <th class="r">Per raid</th>
     </tr></thead>
     <tbody id="ibody"></tbody>
@@ -413,7 +413,7 @@ function weightKey(){ return state.weight; }
 function weightTotal(k){ return k==="wr"?TOTAL_R : TOTAL_C; }
 function shareOf(u,k){ return u[k]/weightTotal(k); }
 function oddsFor(yourRolls,u,k){ return 1-yourRolls.reduce((acc,p)=>acc*(1-p*shareOf(u,k)),1); }
-function setLabel(k){ return k==="wr"?"Live · 60 slots" : "Live CM · 56 slots"; }
+function setLabel(k){ return k==="wr"?"Regular · 60 slots" : "CM · 56 slots"; }
 
 // small icon with an abbreviation chip behind it, so it still reads
 // if the wiki image can't load
@@ -961,7 +961,7 @@ function renderItemTable(){
     body.appendChild(tr);
   });
   document.getElementById("tableNote").innerHTML =
-    `CM vs live compares each item's slice of the 56-slot CM wheel against the 60-slot regular one. `+
+    `CM vs regular compares each item's slice of the 56-slot CM wheel against the 60-slot regular one. `+
     `Per raid uses <b>${setLabel(state.weight)}</b> at your current points — the Challenge Mode toggle switches wheels.`;
 }
 
